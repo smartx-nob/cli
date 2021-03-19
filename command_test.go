@@ -119,24 +119,25 @@ func TestParseAndRunCollectUnknownFlags(t *testing.T) {
 		testArgs     []string
 		expectedUnknownArgs []string
 	}{
-		{[]string{"foo", "test", "-a"}, nil},
-		{[]string{"foo", "test", "-a", "--sss", "test-blah"}, nil},
-		{[]string{"foo", "test", "-unknown","-a"}, []string{"-unknown"}},
-		{[]string{"foo", "test", "-unknown", "-unknown", "-a"}, []string{"-unknown", "-unknown"}},
-		{[]string{"foo", "test", "-unknown","arg1","-a"}, []string{"-unknown", "arg1"}},
-		{[]string{"foo", "test", "-unknown","arg1", "arg2","-a"}, []string{"-unknown", "arg1", "arg2"}},
-		{[]string{"foo", "test", "-unknown","arg1", "-unknown", "arg2","-a"}, []string{"-unknown", "arg1","-unknown", "arg2"}},
-		{[]string{"foo", "test", "-unknown", "arg1", "-a", "-unknown", "arg2"}, []string{"-unknown", "arg1","-unknown", "arg2"}},
-		{[]string{"foo", "test", "-a", "-unknown"}, []string{"-unknown"}},
-		{[]string{"foo", "test", "-a", "-unknown", "arg1"}, []string{"-unknown", "arg1"}},
-		{[]string{"foo", "test", "-a", "-unknown", "arg1", "arg2"}, []string{"-unknown", "arg1", "arg2"}},
-		{[]string{"foo", "test", "-a", "-unknown","arg1", "-unknown", "arg2","-a"}, []string{"-unknown","arg1", "-unknown", "arg2"}},
-		{[]string{"foo", "test", "-a", "-unknown","arg1", "-unknown", "arg2","-a", "-s", "blah"}, []string{"-unknown","arg1", "-unknown", "arg2"}},
-		{[]string{"foo", "test", "-a", "--unknown","arg1"}, []string{"--unknown","arg1"}},
+		{[]string{"foo", "test", "-a", "-ms", "onlyone"}, nil},
+		{[]string{"foo", "test",  "-ms", "onlyone", "-a", "--sss", "test-blah"}, nil},
+		{[]string{"foo", "test",  "-ms", "onlyone", "-unknown","-a"}, []string{"-unknown"}},
+		{[]string{"foo", "test", "-unknown", "-unknown", "-a", "-ms", "onlyone"}, []string{"-unknown", "-unknown"}},
+		{[]string{"foo", "test", "-ms", "onlyone", "-unknown","arg1","-a"}, []string{"-unknown", "arg1"}},
+		{[]string{"foo", "test", "-ms", "onlyone", "-unknown","arg1", "arg2","-a"}, []string{"-unknown", "arg1", "arg2"}},
+		{[]string{"foo", "test", "-ms", "onlyone", "-unknown","arg1", "-unknown", "arg2","-a"}, []string{"-unknown", "arg1","-unknown", "arg2"}},
+		{[]string{"foo", "test", "-ms", "onlyone", "-unknown", "arg1", "-a", "-unknown", "arg2"}, []string{"-unknown", "arg1","-unknown", "arg2"}},
+		{[]string{"foo", "test", "-a", "-unknown", "-ms", "onlyone"}, []string{"-unknown"}},
+		{[]string{"foo", "test", "-a", "-unknown", "arg1", "-ms", "onlyone"}, []string{"-unknown", "arg1"}},
+		{[]string{"foo", "test", "-a", "-unknown", "arg1", "arg2", "-ms", "onlyone"}, []string{"-unknown", "arg1", "arg2"}},
+		{[]string{"foo", "test", "-a", "-unknown","arg1", "-unknown", "arg2","-a", "-ms", "onlyone"}, []string{"-unknown","arg1", "-unknown", "arg2"}},
+		{[]string{"foo", "test", "-a", "-unknown","arg1", "-unknown", "arg2","-a", "-s", "blah", "-ms", "onlyone"}, []string{"-unknown","arg1", "-unknown", "arg2"}},
+		{[]string{"foo", "test", "-a", "--unknown","arg1", "-ms", "onlyone"}, []string{"--unknown","arg1"}},
 	}
 
 	for _, c := range cases {
 		var unKnownArgs []string
+		var multiArgs StringSlice
 		cmd := Command{
 			Name:        "test",
 			Usage:       "this is for testing",
@@ -150,7 +151,7 @@ func TestParseAndRunCollectUnknownFlags(t *testing.T) {
 			Flags: []Flag{
 				BoolFlag{Name: "aaa, a"},
 				StringFlag{Name: "sss, s"},
-
+				StringSliceFlag{Name: "multis, ms", Value: &multiArgs},
 			},
 		}
 		app := NewApp()
@@ -158,6 +159,7 @@ func TestParseAndRunCollectUnknownFlags(t *testing.T) {
 		err := app.Run(c.testArgs)
 		expect(t, err, nil)
 		expect(t, unKnownArgs, c.expectedUnknownArgs)
+		expect(t, len(multiArgs), 1)
 	}
 
 }
