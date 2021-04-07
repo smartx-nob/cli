@@ -259,8 +259,9 @@ func reorderArgs(commandFlags []Flag, args []string) []string {
 		} else if argIsFlag(commandFlags, arg) {
 			// we have determined that this is a flag that we should re-order
 			reorderedArgs = append(reorderedArgs, arg)
-			// if this arg does not contain a "=", then the next index may contain the value for this flag
-			nextIndexMayContainValue = !strings.Contains(arg, "=")
+			// if this arg does not contain a "=", and is not a bool flag, then the next index may contain the value
+			// for this flag
+			nextIndexMayContainValue = !strings.Contains(arg, "=") && !argsIsBoolFlag(commandFlags, arg)
 
 			// simply append any remaining args
 		} else {
@@ -293,6 +294,42 @@ func argIsFlag(commandFlags []Flag, arg string) bool {
 	arg = strings.Split(arg, "=")[0]
 	// look through all the flags, to see if the `arg` is one of our flags
 	for _, flag := range commandFlags {
+		for _, key := range strings.Split(flag.GetName(), ",") {
+			key := strings.TrimSpace(key)
+			if key == arg {
+				return true
+			}
+		}
+	}
+	// return false if this arg was not one of our flags
+	return false
+}
+
+// argsIsBoolFlag checks if an arg is a bool flag
+func argsIsBoolFlag(commandFlags []Flag, arg string) bool {
+	// checks if this is just a `-`, and so definitely not a flag
+	if arg == "-" {
+		return false
+	}
+	// flags always start with a -
+	if !strings.HasPrefix(arg, "-") {
+		return false
+	}
+	// this line turns `--flag` into `flag`
+	if strings.HasPrefix(arg, "--") {
+		arg = strings.Replace(arg, "-", "", 2)
+	}
+	// this line turns `-flag` into `flag`
+	if strings.HasPrefix(arg, "-") {
+		arg = strings.Replace(arg, "-", "", 1)
+	}
+	// this line turns `flag=value` into `flag`
+	arg = strings.Split(arg, "=")[0]
+	// look through all the flags, to see if the `arg` is one of our flags
+	for _, flag := range commandFlags {
+		if _, ok := flag.(BoolFlag); !ok {
+			continue
+		}
 		for _, key := range strings.Split(flag.GetName(), ",") {
 			key := strings.TrimSpace(key)
 			if key == arg {
